@@ -2,7 +2,6 @@ import React from "react";
 import { KAKAO_AUTH_URL, NAVER_AUTH_URL } from "../shared/OAuth";
 import { useDispatch } from "react-redux";
 import { actionCreators as userActions } from "../redux/modules/User_module";
-import { history } from "../redux/configureStore";
 
 import styled from "styled-components";
 import naver from "../images/naver.png";
@@ -11,6 +10,7 @@ import email from "../images/email.png";
 import login_close from "../images/login_close.png";
 
 const LoginModal = (props) => {
+  console.log(props);
   return (
     <Container>
       <FormWrap>
@@ -92,6 +92,9 @@ const CloseBtn = styled.img`
   width: 24px;
   cursor: pointer;
   margin-top: -10px;
+  /* transform: translate(-50%, -50%); */
+  right: 30%;
+  top: 25%;
 `;
 
 const FormWrap = styled.div`

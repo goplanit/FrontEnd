@@ -1,10 +1,17 @@
 import React, { useCallback, useRef, useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 import styled from "styled-components";
 
 //components
 import LoginModal from "../components/LoginModalForm";
+import User_module from "../redux/modules/User_module";
+
+//shared
+import { getCookie } from "../shared/cookie";
 
 function Header(props) {
+  const is_login = getCookie("is_login") ? true : false;
+
   const is_close = useRef();
   const { history } = props;
   const [loginModal, setLoginModal] = useState(false);
@@ -25,43 +32,87 @@ function Header(props) {
     };
   });
 
-  return (
-    <>
-      <Container>
-        <HeaderLogo
-          page={props.page}
-          onClick={() => {
-            history.push("/");
-          }}
-        >
-          내일 어디가?
-        </HeaderLogo>
-        <HeaderMenu page={props.page}>
-          <HeaderMenuItem>
-            <div></div>
-            <span>Home</span>
-          </HeaderMenuItem>
-          <HeaderMenuItem>
-            <div></div>
-            <span>Explore</span>
-          </HeaderMenuItem>
-          <HeaderMenuItem>
-            <div></div>
-
-            <span
+  if (is_login === true) {
+    return (
+      <>
+        <HeaderLayout bgColor={bgColor} id="header-layout">
+          <Container>
+            <HeaderLogo
+              page={props.page}
               onClick={() => {
-                setLoginModal(true);
+                history.push("/");
               }}
             >
-              Login
-            </span>
+              내일 어디가?
+            </HeaderLogo>
+            <HeaderMenu page={props.page}>
+              <HeaderMenuItem>
+                <div></div>
+                <span>Home</span>
+              </HeaderMenuItem>
+              <HeaderMenuItem>
+                <div></div>
+                <span>Explore</span>
+              </HeaderMenuItem>
+              <HeaderMenuItem>
+                <div></div>
 
-            {loginModal && <LoginModal ref={is_close} />}
-          </HeaderMenuItem>
-        </HeaderMenu>
-      </Container>
-    </>
-  );
+                <span
+                  onClick={() => {
+                    document.location.href = "/mytrip";
+                  }}
+                >
+                  My trip
+                </span>
+
+                {loginModal && <LoginModal ref={is_close} />}
+              </HeaderMenuItem>
+            </HeaderMenu>
+          </Container>
+        </HeaderLayout>
+      </>
+    );
+  } else {
+    return (
+      <>
+        <HeaderLayout bgColor={bgColor} id="header-layout">
+          <Container>
+            <HeaderLogo
+              page={props.page}
+              onClick={() => {
+                history.push("/");
+              }}
+            >
+              내일 어디가?
+            </HeaderLogo>
+            <HeaderMenu page={props.page}>
+              <HeaderMenuItem>
+                <div></div>
+                <span>Home</span>
+              </HeaderMenuItem>
+              <HeaderMenuItem>
+                <div></div>
+                <span>Explore</span>
+              </HeaderMenuItem>
+              <HeaderMenuItem>
+                <div></div>
+
+                <span
+                  onClick={() => {
+                    setLoginModal(true);
+                  }}
+                >
+                  Login
+                </span>
+
+                {loginModal && <LoginModal ref={is_close} />}
+              </HeaderMenuItem>
+            </HeaderMenu>
+          </Container>
+        </HeaderLayout>
+      </>
+    );
+  }
 }
 const HeaderLayout = styled.div`
   position: fixed;

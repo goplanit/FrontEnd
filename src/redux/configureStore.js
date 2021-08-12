@@ -11,12 +11,14 @@ import storage from "redux-persist/lib/storage";
 // reducer
 import detailSlice from "./modules/detailSlice";
 import option from "./modules/option";
+import user from "./modules/User_module";
 
 export const history = createBrowserHistory();
 
 const rootReducer = combineReducers({
   detail: detailSlice.reducer,
   option: option,
+  user: user,
   router: connectRouter(history),
 });
 

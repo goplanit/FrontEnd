@@ -1,27 +1,29 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { config } from "../../shared/config";
 import { setCookie } from "../../shared/cookie";
-import { history } from "../configureStore";
 import Swal from "sweetalert2";
 import axios from "axios";
+import qs from "qs";
 
 import { REDIRECT_URI } from "../../shared/OAuth";
 
+const initialState = {
+  email: null,
+  pwd: null,
+  emailCheck: false,
+  nickName: null,
+  nickNameCheck: false,
+  phoneAuthCheck: false,
+  phoneAuthConfirm: false,
+  phoneAuth: null,
+  socialId: null,
+  is_login: false,
+  is_loading: false,
+};
+
 const UserSlice = createSlice({
   name: "user",
-  initialState: {
-    email: null,
-    pwd: null,
-    emailCheck: false,
-    nickName: null,
-    nickNameCheck: false,
-    phoneAuthCheck: false,
-    phoneAuthConfirm: false,
-    phoneAuth: null,
-    socialId: null,
-    is_login: false,
-    is_loading: false,
-  },
+  initialState: initialState,
   reducers: {
     setUser: (state, action) => {
       state.email = action.payload.email;
@@ -60,7 +62,6 @@ const signupDB = (email, nickName, pwd, pwdConfirm, phoneNumber) => {
   console.log(email, nickName, pwd, pwdConfirm, phoneNumber);
   console.log(typeof phoneNumber);
   return function (dispatch, getState) {
-    console.log(history);
     axios({
       method: "POST",
       url: `${config.api}/user/join`,
@@ -96,7 +97,6 @@ const signupDB = (email, nickName, pwd, pwdConfirm, phoneNumber) => {
 
 //로그인
 const loginDB = (email, pwd) => {
-  console.log(email, pwd);
   return function (dispatch, getState) {
     axios({
       method: "POST",
@@ -107,11 +107,11 @@ const loginDB = (email, pwd) => {
       },
     }).then(async (response) => {
       console.log(response);
-      const ACCESS_TOKEN = response.data.activeToken;
+      const ACCESS_TOKEN = response.data.accessToken;
       const REFRESH_TOKEN = response.data.refreshToken;
 
       await setCookie("is_login", REFRESH_TOKEN);
-      await sessionStorage.setItem("token", ACCESS_TOKEN);
+      await localStorage.setItem("token", ACCESS_TOKEN);
 
       if (response.data.ok === false) {
         Swal.fire({
@@ -127,19 +127,67 @@ const loginDB = (email, pwd) => {
           showConfirmButton: false,
           timer: 1400,
         });
+        dispatch(
+          setUser({
+            email: email,
+            pwd: pwd,
+          })
+        );
         document.location.href = "/";
       }
-      console.log(response);
     });
   };
 };
 
-// 카카오로 로그인
+// const extensionToken = (state) => {
+//   return function (dispatch, getState) {
+//     const accessToken = localStorage.getItem("token");
+//     const refreshToken = getCookie("is_login");
+
+//     axios({
+//       method: "GET",
+//       url: `${config.api}/user/refreshtoken`,
+//       headers: {
+//         Authorization: `Bearer ${refreshToken}`,
+//       },
+//     })
+//       .then(async (response) => {
+//         console.log(response)
+//         const ACCESS_TOKEN = response.data.activeToken;
+
+//         // 새롭게 받은 access 토큰 로컬에 다시 저장(이전꺼 지우고)
+//         await localStorage.clear();
+//         await localStorage.setItem("token", ACCESS_TOKEN);
+
+//         // 새롭게 발급받은 ACCESS 토큰 헤더에 담기
+//         axios.defaults.headers.common[
+//           "Authorization"
+//         ] = `Bearer ${ACCESS_TOKEN}`;
+
+//         // 현재시간
+//         const Current_time = new Date().getTime();
+
+//         // 로그인상태 true 로 변경
+//         state = true;
+
+//         // 1분전 자동실행
+//         setTimeout(
+//           extensionToken(state),
+//           Current_time - Current_time - 60000 * 29
+//         );
+//         return;
+//       })
+//       .catch((err) => {
+//         console.log("연장실패!", err);
+//       });
+//   };
+// };
+
+// 카카오 로그인
 const kakaoLogin = (code) => {
   return function (dispatch, getState) {
     axios({
       method: "POST",
-      // url: `${REDIRECT_URI}?code=${code}`,
       url: "https://kauth.kakao.com/oauth/token",
       headers: {
         "Content-type": "application/x-www-form-urlencoded;charset=utf-8",
@@ -150,39 +198,34 @@ const kakaoLogin = (code) => {
         redirect_uri: `${REDIRECT_URI}`,
         code: `${code}`,
       },
-    }).then(async (response) => {
-      const ACCESS_TOKEN = response.data.access_token;
-      console.log(ACCESS_TOKEN);
+    }).then((response) => {
+      const token = response.data.access_token;
       axios({
         method: "POST",
-        // url: `${REDIRECT_URI}?code=${code}`,
-        url: "https://kapi.kakao.com/v2/user/me",
-        headers: {
-          Authorization: `Bearer ${ACCESS_TOKEN}`,
-          "Content-type": "application/x-www-form-urlencoded;charset=utf-8",
-        },
+        url: `${config.api}/user/kakao`,
+        data: qs.stringify({
+          socialToken: `${token}`,
+        }),
       }).then(async (response) => {
         console.log(response);
+        const ACCESS_TOKEN = response.data.accessToken;
+        const REFRESH_TOKEN = response.data.refreshToken;
+
+        await setCookie("is_login", REFRESH_TOKEN);
+        await localStorage.setItem("token", ACCESS_TOKEN);
+
+        document.location.href = "/";
+        // axios.defaults.headers.common[
+        //   "Authorization"
+        // ] = `Bearer ${ACCESS_TOKEN}`;
+
+        // const is_login = getState().user.is_login;
+        // const Current_time = new Date().getTime();
+
+        // setTimeout(extentionAcess());
       });
-
-      // sessionStorage.setItem("token", ACCESS_TOKEN);
-      // const token = sessionStorage.getItem("token");
-
-      // axios({
-      //   method: "POST",
-      //   url: `${config.api}/user/login`,
-      //   data: {
-      //     email,
-      //     pwd,
-      //   },
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //     withCredentials: true,
-      //   }.then((response) => {
-      //     console.log(response);
-      //   }),
-      // });
     });
+    // document.location.href = "/";
   };
 };
 
