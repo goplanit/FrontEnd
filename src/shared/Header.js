@@ -13,7 +13,7 @@ function Header(props) {
   const is_login = getCookie("is_login") ? true : false;
 
   const is_close = useRef();
-  const { history } = props;
+  const { history, bgColor } = props;
   const [loginModal, setLoginModal] = useState(false);
 
   const onClickOutside = useCallback((e) => {
